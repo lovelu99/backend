@@ -27,11 +27,12 @@ pipeline {
                     def trivyStatus = sh (
                     script: """
                     trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                    --scanners vuln \
                     --severity HIGH,CRITICAL \
                     --exit-code 1 \
                     --ignore-unfixed \
-                    --format table \
-                    --output reports/trivy-report.txt \
+                    --format json \
+                    --output reports/trivy-backend-report.json \
                     --no-progress
                     """,
                     returnStatus: true
@@ -45,6 +46,30 @@ pipeline {
                     }
                 }
             }
+            post {
+                failure {
+                    emailext(
+                        subject: "Trivy Scan Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        mimeType: 'text/html',
+                        body: """
+                        <html>
+                        <body>
+                            <h2>Container Security Scan Failed</h2>
+                            <p><b>Job Name:</b> ${env.JOB_NAME}</p>
+                            <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
+                            <p><b>Stage:</b> Container Security Scan</p>
+                            <p><b>Docker Image:</b> ${IMAGE_NAME}:${IMAGE_TAG}</p>
+                            <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                            <p>Trivy detected <b>HIGH/CRITICAL</b> vulnerabilities in the container image.</p>
+                            <p>Please review the Jenkins console output and attached Trivy report.</p>
+                        </body>
+                        </html>
+                        """,
+                        to: 'relibot107@onbap.com',
+                        attachmentsPattern: 'reports/trivy-backend-report.json'
+                    )
+                }
+            }
         }
         stage ('Code Quality Scan') {
             steps {
@@ -54,7 +79,7 @@ pipeline {
                     sh """
                         ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=todo-frontend \
-                        -Dsonar.projectName=todo-frontend \
+                        -Dsonar.projectName=todo-backend \
                         -Dsonar.sources=. \
                         -Dsonar.token=${env.SONAR_AUTH_TOKEN}
                     """
@@ -63,6 +88,29 @@ pipeline {
                     waitForQualityGate abortPipeline: true
                     }
                 }                
+            }
+            post {
+                failure {
+                    emailext(
+                        subject: "SonarQube Quality Gate Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        mimeType: 'text/html',
+                        body: """
+                        <html>
+                        <body>
+                            <h2>SonarQube Quality Gate Failed</h2>
+                            <p><b>Job Name:</b> ${env.JOB_NAME}</p>
+                            <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
+                            <p><b>Stage:</b> Quality Gate</p>
+                            <p><b>Project:</b> ${env.JOB_NAME}</p>
+                            <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                            <p>The SonarQube quality gate did not pass.</p>
+                            <p>Please review code issues, bugs, vulnerabilities, code smells, coverage, and duplication in SonarQube before proceeding.</p>
+                        </body>
+                        </html>
+                        """,
+                        to: 'relibot107@onbap.com'
+                    )
+                }
             }
         }
         stage ('Push Docker Image') {
@@ -95,6 +143,27 @@ pipeline {
                     cleanWs()
                 }
             }
+        }
+    }
+    post { 
+        success { 
+            emailext(
+                subject: "Back end sucessfully Build and Deployed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                mimeType: 'text/html',
+                body: """
+                <html>
+                <body>
+                    <h2>Back end sucessfully Build and Deployed</h2>
+                    <p><b>Job Name:</b> ${env.JOB_NAME}</p>
+                    <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
+                    <p><b>Stage:</b> Quality Gate</p>
+                    <p><b>Project:</b> ${env.JOB_NAME}</p>
+                    <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                </body>
+                </html>
+                """,
+                to: 'relibot107@onbap.com'
+            )
         }
     }
 }
