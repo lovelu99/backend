@@ -75,7 +75,7 @@ pipeline {
             steps {
                 script {
                     def scannerHome = tool 'sonarscanner'
-                    withSonarQubeEnv('sonarqube') {                   
+                    withSonarQubeEnv('sonarbackend') {                   
                     sh """
                         ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=todo-backend \
