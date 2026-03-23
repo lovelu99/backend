@@ -156,7 +156,7 @@ pipeline {
                     <h2>Back end sucessfully Build and Deployed</h2>
                     <p><b>Job Name:</b> ${env.JOB_NAME}</p>
                     <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
-                    <p><b>Stage:</b> Quality Gate</p>
+                    <p><b>Image Name: </b> ${IMAGE_NAME}:${IMAGE_TAG}</p>
                     <p><b>Project:</b> ${env.JOB_NAME}</p>
                     <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
                 </body>
