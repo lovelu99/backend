@@ -78,7 +78,7 @@ pipeline {
                     withSonarQubeEnv('sonarqube') {                   
                     sh """
                         ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=todo-frontend \
+                        -Dsonar.projectKey=todo-backend \
                         -Dsonar.projectName=todo-backend \
                         -Dsonar.sources=. \
                         -Dsonar.token=${env.SONAR_AUTH_TOKEN}
